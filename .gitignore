@@ -1,0 +1,13 @@
+# OS / editor cruft
+.DS_Store
+__pycache__/
+
+# Working/reference files kept locally, not published in the repo
+ccaf_cheatsheet.pdf
+ccaf_guide_v2_updates.md
+classification.csv
+classification_summary.md
+coverage_gap_report.md
+domain_task_labels.json
+domain_task_reference.md
+id_mapping.json
