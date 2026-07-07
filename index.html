@@ -22419,8 +22419,24 @@
       });
     }
 
+    // History depth is 0 at the home/menu screen and 1 inside any mode (study,
+    // test, cheat sheet, summary). Entering a mode from home pushes one entry;
+    // moving between modes while already at depth 1 (e.g. test -> summary,
+    // retrying a test) replaces that entry instead of stacking another one.
+    // This uses `window.history` explicitly - the app has its own local
+    // `history` array (study deck navigation) that shadows the global.
+    function enterMode(screen) {
+      const atHome = !window.history.state || window.history.state.screen === 'menu';
+      if (atHome) {
+        window.history.pushState({ screen }, '', location.href);
+      } else {
+        window.history.replaceState({ screen }, '', location.href);
+      }
+    }
+
     function renderMenu() {
       mode = 'menu';
+      window.history.replaceState({ screen: 'menu' }, '', location.href);
       stopTestTimer();
       deckMeta.textContent = '';
       setShortcutsVisible(false);
@@ -22464,6 +22480,7 @@
 
     function renderCheatSheet() {
       mode = 'cheat';
+      enterMode('cheat');
       stopTestTimer();
       setShortcutsVisible(false);
       deckMeta.textContent = '';
@@ -22489,9 +22506,6 @@
       }).join('');
 
       app.innerHTML = `
-        <div class="actions" style="margin-top:0;">
-          <button class="action secondary" type="button" id="cheatMenuBtn">Mode Select</button>
-        </div>
         <h2 class="cheat-heading">Cheat Sheet</h2>
         <p class="cheat-subhead">Uber-focused key concepts &mdash; last-scan reference, not a substitute for the full question bank.</p>
         <div class="callout-grid">
@@ -22510,8 +22524,6 @@
         </div>
         ${domainSections}
       `;
-
-      document.getElementById('cheatMenuBtn').addEventListener('click', renderMenu);
     }
 
     function startStudy() {
@@ -22520,6 +22532,7 @@
       stopTestTimer();
       setShortcutsVisible(true);
       mode = 'study';
+      enterMode('study');
       deck = shuffle(pool);
       studyDeckSize = pool.length;
       current = null;
@@ -22752,6 +22765,7 @@
       stopTestTimer();
       setShortcutsVisible(true);
       mode = 'test';
+      enterMode('test');
       testQuestions = shuffle(pool).slice(0, Math.min(TEST_SIZE, pool.length)).map(prepareQuestion);
       testIndex = 0;
       testAnswers = {};
@@ -22814,6 +22828,7 @@
       stopTestTimer();
       setShortcutsVisible(false);
       mode = 'summary';
+      enterMode('summary');
       renderSummary();
     }
 
@@ -22898,6 +22913,12 @@
 
     renderMenu();
     document.addEventListener('keydown', handleKeyboard);
+    // Back/forward always returns to the home screen - it never tries to
+    // resume mid-deck position, matching the fact that re-entering a mode
+    // (Practice/Test/Cheat Sheet) already always starts fresh in this app.
+    window.addEventListener('popstate', () => {
+      renderMenu();
+    });
   </script>
 </body>
 </html>
