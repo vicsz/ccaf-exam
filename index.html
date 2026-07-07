@@ -22402,6 +22402,23 @@
       }
     }
 
+    function normalizedQuestionKey(question) {
+      return String(question?.question || question?.id || '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function uniqueQuestionPool(items = QUESTIONS) {
+      const seen = new Set();
+      return items.filter(question => {
+        const key = normalizedQuestionKey(question);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     function renderMenu() {
       mode = 'menu';
       stopTestTimer();
@@ -22498,7 +22515,7 @@
     }
 
     function startStudy() {
-      const pool = QUESTIONS;
+      const pool = uniqueQuestionPool();
       if (!pool.length) return;
       stopTestTimer();
       setShortcutsVisible(true);
@@ -22730,7 +22747,7 @@
     }
 
     function startTest() {
-      const pool = QUESTIONS;
+      const pool = uniqueQuestionPool();
       if (!pool.length) return;
       stopTestTimer();
       setShortcutsVisible(true);
